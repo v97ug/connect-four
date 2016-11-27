@@ -9,6 +9,7 @@ import Debug.Trace as D
 data Clover = Empty | GreenClover | RedClover deriving (Show, Eq)
 data Turn = Green | Red deriving (Show, Eq)
 type Field = [[Clover]]
+type Plot = (Double, Double)
 
 putClover :: Vec2 -> Field -> Turn -> Maybe (Turn, Field)
 putClover (V2 x y) oldField turn
@@ -33,11 +34,11 @@ makeClover :: Turn -> Clover
 makeClover Green = GreenClover
 makeClover Red = RedClover
 
-drawClovers :: Field -> [[(Double, Double)]] -> [Bitmap] -> Game ()
+drawClovers :: Field -> [[Plot]] -> [Bitmap] -> Game ()
 drawClovers field plots picts = zipWithM_ (eachLineDraw picts) field plots
   where eachLineDraw picts = zipWithM_ (drawOneClover picts)
 
-drawOneClover :: [Bitmap] -> Clover -> (Double, Double) -> Game ()
+drawOneClover :: [Bitmap] -> Clover -> Plot -> Game ()
 drawOneClover _ Empty _ = return ()
 drawOneClover  [gCloverPict, _] GreenClover (x,y) = translate (V2 x y) $ bitmap gCloverPict
 drawOneClover  [_, rCloverPict] RedClover (x,y) = translate (V2 x y) $ bitmap rCloverPict
@@ -50,7 +51,7 @@ drawGrid = forM_ [0,50..50*8] $ \x -> do
 
 -- drawPict p = translate (V2 50 50) $ bitmap p
 
-update :: Field -> [[(Double, Double)]] -> [Bitmap] -> Turn -> Game ()
+update :: Field -> [[Plot]] -> [Bitmap] -> Turn -> Game ()
 update field plots picts turn = do
   pos <- mousePosition
   l <- mouseButtonL
@@ -83,5 +84,5 @@ main = runGame Windowed (Box (V2 0 0) (V2 400 400)) $ do
         y <- plotList
         x <- plotList
         return (x,y)
-        
+
   update emptyField (eachSlice fieldLen plots) [gCloverPict, rCloverPict] Green
