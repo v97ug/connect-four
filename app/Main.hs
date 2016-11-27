@@ -4,6 +4,7 @@ import Lib
 import FreeGame
 import Data.Maybe
 import Control.Monad
+import Data.List
 import Debug.Trace as D
 
 data Clover = Empty | GreenClover | RedClover deriving (Show, Eq)
@@ -43,6 +44,25 @@ drawOneClover _ Empty _ = return ()
 drawOneClover  [gCloverPict, _] GreenClover (x,y) = translate (V2 x y) $ bitmap gCloverPict
 drawOneClover  [_, rCloverPict] RedClover (x,y) = translate (V2 x y) $ bitmap rCloverPict
 
+judgeFour :: Field -> Bool
+judgeFour field
+  | vertical field /= [] = True
+  | horizontal field /= [] = True
+  | otherwise = False
+
+-- 2次元リストを転置させる
+transpose' :: Int -> [[a]] ->[[a]]
+transpose' n list
+  | (length . head) list < n = []
+  | otherwise = concatMap (drop (n-1) . take n) list : transpose' (n+1) list
+
+vertical :: Field -> Field
+vertical = horizontal . transpose' 1
+
+-- Emptyを取り除く
+horizontal :: Field -> Field
+horizontal = concatMap (filter (\x -> 4 <= length x) . filter (\x -> head x /= Empty) . group)
+
 -- 盤の描画
 drawGrid :: Game ()
 drawGrid = forM_ [0,50..50*8] $ \x -> do
@@ -51,8 +71,8 @@ drawGrid = forM_ [0,50..50*8] $ \x -> do
 
 -- drawPict p = translate (V2 50 50) $ bitmap p
 
-update :: Field -> [[Plot]] -> [Bitmap] -> Turn -> Game ()
-update field plots picts turn = do
+update :: Field -> [[Plot]] -> [Bitmap] -> Turn -> Font -> Game ()
+update field plots picts turn font = do
   pos <- mousePosition
   l <- mouseButtonL
 
@@ -63,9 +83,11 @@ update field plots picts turn = do
   drawClovers newField plots picts
   -- drawPict pict
 
+  when (judgeFour field) . translate (V2 80 200) . color black $ text font 40 "Hello, World"
+
   tick -- これ絶対必要
   escape <- keyPress KeyEscape
-  unless escape $ update newField plots picts newTurn
+  unless escape $ update newField plots picts newTurn font
 
 eachSlice :: Int -> [a] -> [[a]]
 eachSlice _ [] = []
@@ -76,6 +98,7 @@ main = runGame Windowed (Box (V2 0 0) (V2 400 400)) $ do
   clearColor white
   gCloverPict <- readBitmap "img/clover1.png"
   rCloverPict <- readBitmap  "img/clover2.png"
+  font <- loadFont "VL-PGothic-Regular.ttf"
   let fieldLen = 8 :: Int
       emptyField = replicate fieldLen $ replicate fieldLen Empty
       plots = do
@@ -85,4 +108,4 @@ main = runGame Windowed (Box (V2 0 0) (V2 400 400)) $ do
         x <- plotList
         return (x,y)
 
-  update emptyField (eachSlice fieldLen plots) [gCloverPict, rCloverPict] Green
+  update emptyField (eachSlice fieldLen plots) [gCloverPict, rCloverPict] Green font
