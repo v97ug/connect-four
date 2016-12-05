@@ -9,6 +9,7 @@ import Debug.Trace as D
 
 data Clover = Empty | GreenClover | RedClover deriving (Show, Eq)
 data Turn = Green | Red deriving (Show, Eq)
+data Scene = Opening | Play
 type Field = [[Clover]]
 type Plot = (Double, Double)
 
@@ -71,10 +72,19 @@ drawGrid = forM_ [0,50..50*8] $ \x -> do
 
 -- drawPict p = translate (V2 50 50) $ bitmap p
 
-update :: Field -> [[Plot]] -> [Bitmap] -> Turn -> Font -> Game ()
-update field plots picts turn font = do
+update :: Field -> [[Plot]] -> [Bitmap] -> Turn -> Font -> Scene -> Game ()
+update field plots picts turn font Opening = do
+  l <- mouseDownL
+
+  let newScene = if l then Play else Opening
+
+  tick -- これ絶対必要
+  escape <- keyPress KeyEscape
+  unless escape $ update field plots picts turn font newScene
+
+update field plots picts turn font Play = do
   pos <- mousePosition
-  l <- mouseButtonL
+  l <- mouseDownL
 
   let result = if l then putClover pos field turn else Nothing
       (newTurn, newField) = fromMaybe (turn,field) result
@@ -83,11 +93,11 @@ update field plots picts turn font = do
   drawClovers newField plots picts
   -- drawPict pict
 
-  when (judgeFour field) . translate (V2 80 200) . color black $ text font 40 "Hello, World"
+  when (judgeFour field) . translate (V2 80 200) . color black $ text font 40 (show turn)
 
   tick -- これ絶対必要
   escape <- keyPress KeyEscape
-  unless escape $ update newField plots picts newTurn font
+  unless escape $ update newField plots picts newTurn font Play
 
 eachSlice :: Int -> [a] -> [[a]]
 eachSlice _ [] = []
@@ -108,4 +118,4 @@ main = runGame Windowed (Box (V2 0 0) (V2 400 400)) $ do
         x <- plotList
         return (x,y)
 
-  update emptyField (eachSlice fieldLen plots) [gCloverPict, rCloverPict] Green font
+  update emptyField (eachSlice fieldLen plots) [gCloverPict, rCloverPict] Green font Opening
