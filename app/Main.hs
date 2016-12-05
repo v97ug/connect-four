@@ -9,16 +9,17 @@ import Debug.Trace as D
 
 data Clover = Empty | GreenClover | RedClover deriving (Show, Eq)
 data Turn = Green | Red deriving (Show, Eq)
-data Scene = Opening | Play
+data Scene = Opening | Play | GameOver
 type Field = [[Clover]]
 type Plot = (Double, Double)
 
-putClover :: Vec2 -> Field -> Turn -> Maybe (Turn, Field)
-putClover (V2 x y) oldField turn
+putClover :: Bool -> Vec2 -> Field -> Turn -> Maybe Field
+putClover isPut (V2 x y) oldField turn
+  | not isPut = Nothing
   | length oldField <= row' = Nothing
   | length (head oldField) <= column' = Nothing
   | oldField !! row' !! column' /= Empty = Nothing
-  | otherwise = Just (toggle turn,
+  | otherwise = Just (
       take row' oldField
         ++ [take column' oneLine ++ [makeClover turn] ++ drop (column'+1) oneLine]
         ++ drop (row' + 1) oldField
@@ -45,11 +46,14 @@ drawOneClover _ Empty _ = return ()
 drawOneClover  [gCloverPict, _] GreenClover (x,y) = translate (V2 x y) $ bitmap gCloverPict
 drawOneClover  [_, rCloverPict] RedClover (x,y) = translate (V2 x y) $ bitmap rCloverPict
 
-judgeFour :: Field -> Bool
+judgeFour :: Field -> Maybe Clover
 judgeFour field
-  | vertical field /= [] = True
-  | horizontal field /= [] = True
-  | otherwise = False
+  | connectVertical /= [] = Just ((head . head) connectVertical)
+  | connectHorizontal /= [] = Just ((head . head) connectVertical)
+  | otherwise = Nothing
+  where
+    connectVertical = vertical field :: Field
+    connectHorizontal = horizontal field :: Field
 
 -- 2次元リストを転置させる
 transpose' :: Int -> [[a]] ->[[a]]
@@ -78,6 +82,9 @@ update field plots picts turn font Opening = do
 
   let newScene = if l then Play else Opening
 
+  translate (V2 80 200) . color black $ text font 40 "くろーばーならべ"
+  translate (V2 80 300) . color black $ text font 40 "click to start"
+
   tick -- これ絶対必要
   escape <- keyPress KeyEscape
   unless escape $ update field plots picts turn font newScene
@@ -86,29 +93,47 @@ update field plots picts turn font Play = do
   pos <- mousePosition
   l <- mouseDownL
 
-  let result = if l then putClover pos field turn else Nothing
-      (newTurn, newField) = fromMaybe (turn,field) result
+  let maybeField = putClover l pos field turn  :: Maybe Field
+      newField = fromMaybe field maybeField
+      winnerClover = judgeFour newField :: Maybe Clover
+      newTurn = if isJust maybeField && isNothing winnerClover then toggle turn else turn
+      newScene = if isJust winnerClover then GameOver else Play
 
   drawGrid -- 盤の描画
   drawClovers newField plots picts
   -- drawPict pict
 
-  when (judgeFour field) . translate (V2 80 200) . color black $ text font 40 (show turn)
+  -- when (isJust winnerClover) . translate (V2 80 200) . color black $ text font 40 (show turn)
+  -- translate (V2 80 300) . color black $ text font 40 (show (isNothing winnerClover)) -- Debug
 
   tick -- これ絶対必要
   escape <- keyPress KeyEscape
-  unless escape $ update newField plots picts newTurn font Play
+  unless escape $ update newField plots picts newTurn font newScene
+
+update field plots picts turn font GameOver = do
+  drawGrid -- 盤の描画
+  drawClovers field plots picts
+  translate (V2 80 200) . color black $ text font 40 (show turn ++ "の勝ちです。")
+  translate (V2 80 300) . color black $ text font 40 "もういちど、あそぶときは\n画面をクリックしてくださいっ。"
+  l <- mouseDownL
+  let fieldLen = 8 :: Int
+      emptyField = replicate fieldLen $ replicate fieldLen Empty
+  tick
+  if l then update emptyField plots picts Green font Play
+    else update field plots picts turn font GameOver
 
 eachSlice :: Int -> [a] -> [[a]]
 eachSlice _ [] = []
 eachSlice n list = take n list : eachSlice n (drop n list)
 
 main :: IO (Maybe())
-main = runGame Windowed (Box (V2 0 0) (V2 400 400)) $ do
+main = runGame Windowed (Box (V2 0 0) (V2 800 800)) $ do
   clearColor white
   gCloverPict <- readBitmap "img/clover1.png"
   rCloverPict <- readBitmap  "img/clover2.png"
-  font <- loadFont "VL-PGothic-Regular.ttf"
+  -- font <- loadFont "VL-PGothic-Regular.ttf"
+  -- font <- loadFont "NekokaburiFont/nekokaburi.otf"
+  font <- loadFont "jk-go-m-1/JKG-M_3.ttf"
   let fieldLen = 8 :: Int
       emptyField = replicate fieldLen $ replicate fieldLen Empty
       plots = do
