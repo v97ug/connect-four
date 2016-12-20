@@ -44,6 +44,7 @@ extra-deps:
 - colors-0.3.0.2
 - JuicyPixels-util-0.2
 - free-game-1.1.90
+- array-0.5.1.1
 
 # Override default flag values for local packages and extra-deps
 flags: {}

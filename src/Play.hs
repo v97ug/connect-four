@@ -2,8 +2,9 @@ module Play where
 
 import FreeGame
 import Data.List
+import Data.Array
 
-data Clover = Empty | GreenClover | RedClover deriving (Show, Eq)
+data Clover = Empty | GreenClover | RedClover deriving (Show, Eq, Ord, Ix, Enum)
 data Turn = Green | Red deriving (Show, Eq)
 type Field = [[Clover]]
 type Plot = (Double, Double)

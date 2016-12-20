@@ -8,10 +8,11 @@ import Data.Maybe
 import Control.Monad
 import Data.List
 import Debug.Trace as D
+import Data.Array
 
 data Scene = Opening | Play | GameOver
 
-update :: Field -> [[Plot]] -> [Bitmap] -> Turn -> Font -> Scene -> Game ()
+-- update :: Field -> [[Plot]] -> [Bitmap] -> Turn -> Font -> Scene -> Game ()
 update field plots picts turn font Opening = do
   l <- mouseDownL
 
@@ -64,12 +65,14 @@ main = runGame Windowed (Box (V2 0 0) (V2 800 800)) $ do
   rCloverPict <- readBitmap  "img/clover2.png"
   font <- loadFont "font/jk-go-m-1/JKG-M_3.ttf"
   let fieldLen = 8 :: Int
-      emptyField = replicate fieldLen $ replicate fieldLen Empty
+
       plots = do
         let lenDouble = fromIntegral fieldLen :: Double
             plotList = [25,75..25+50*(lenDouble - 1)]
         y <- plotList
         x <- plotList
         return (x,y) :: [Plot]
+      -- emptyField = replicate fieldLen $ replicate fieldLen Empty
+      emptyField = array (head plots, last plots) [zip plots [Empty, Empty ..]]
 
   update emptyField (eachSlice fieldLen plots) [gCloverPict, rCloverPict] Green font Opening
