@@ -131,9 +131,9 @@ main = runGame Windowed (Box (V2 0 0) (V2 800 800)) $ do
   clearColor white
   gCloverPict <- readBitmap "img/clover1.png"
   rCloverPict <- readBitmap  "img/clover2.png"
-  -- font <- loadFont "VL-PGothic-Regular.ttf"
-  -- font <- loadFont "NekokaburiFont/nekokaburi.otf"
-  font <- loadFont "jk-go-m-1/JKG-M_3.ttf"
+  -- font <- loadFont "font/VL-PGothic-Regular.ttf"
+  -- font <- loadFont "font/NekokaburiFont/nekokaburi.otf"
+  font <- loadFont "font/jk-go-m-1/JKG-M_3.ttf"
   let fieldLen = 8 :: Int
       emptyField = replicate fieldLen $ replicate fieldLen Empty
       plots = do
