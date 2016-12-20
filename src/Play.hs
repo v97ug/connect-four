@@ -3,27 +3,67 @@ module Play where
 import FreeGame
 import Data.List
 import Data.Array
+import Data.Maybe
+import Control.Monad
 
 data Clover = Empty | GreenClover | RedClover deriving (Show, Eq, Ord, Ix, Enum)
 data Turn = Green | Red deriving (Show, Eq)
-type Field = [[Clover]]
+-- type Field = [[Clover]]
+type Field = Array (Int,Int) Clover
 type Plot = (Double, Double)
 
-putClover :: Bool -> Vec2 -> Field -> Turn -> Maybe Field
-putClover isPut (V2 x y) oldField turn
+-- 返り値は最終的なField
+playing :: Field -> [Bitmap] -> Turn -> Font -> Int -> Game [[Clover]]
+playing field picts turn font fieldLen = do
+  pos <- mousePosition
+  l <- mouseDownL
+
+  let maybeField = putClover l pos field turn fieldLen :: Maybe Field
+      newField = fromMaybe field maybeField
+      newCloverField = toCloverField newField :: [[Clover]]
+      winnerClover = judgeFour newCloverField :: Maybe Clover
+      newTurn = if isJust maybeField && isNothing winnerClover then toggle turn else turn
+      isNewScene = isJust winnerClover :: Bool
+
+  drawGrid -- 盤の描画
+  drawClovers newCloverField picts
+
+  tick -- これ絶対必要
+  if isNewScene then return newCloverField else playing newField picts newTurn font fieldLen
+
+toCloverField :: Field -> [[Clover]]
+toCloverField field =
+  let (_minTuple, (fieldLen, _)) = bounds field
+  in eachSlice fieldLen $ elems field :: [[Clover]]
+--TODO turnも必要
+-- gameOver :: Field -> [Plot] -> [Bitmap] -> Font -> Game ()
+-- gameOver field plots picts font = do
+--   drawGrid -- 盤の描画
+--   drawClovers field picts
+--   translate (V2 80 200) . color black $ text font 40 (show turn ++ "の勝ちです。")
+--   translate (V2 80 300) . color black $ text font 40 "もういちど、あそぶときは\n画面をクリックしてくださいっ。"
+--   l <- mouseDownL
+--   let fieldLen = 8 :: Int
+--       emptyField = replicate fieldLen $ replicate fieldLen Empty
+--   tick
+--   unless l $  gameOver field plots picts font
+
+putClover :: Bool -> Vec2 -> Field-> Turn -> Int -> Maybe Field
+putClover isPut (V2 x y) oldField turn fieldLen
   | not isPut = Nothing
-  | length oldField <= row' = Nothing
-  | length (head oldField) <= column' = Nothing
-  | oldField !! row' !! column' /= Empty = Nothing
+  | fieldLen <= row' = Nothing
+  | fieldLen <= column' = Nothing
+  | oldField ! (row', column') /= Empty = Nothing
   | otherwise = Just (
-      take row' oldField
-        ++ [take column' oneLine ++ [makeClover turn] ++ drop (column'+1) oneLine]
-        ++ drop (row' + 1) oldField
+      oldField // [((row', column'), makeClover turn)]
+      -- take row' oldField
+        -- ++ [take column' oneLine ++ [makeClover turn] ++ drop (column'+1) oneLine]
+        -- ++ drop (row' + 1) oldField
         )
   where
     row' =  floor y `div` 50
     column' = floor x `div` 50
-    oneLine = oldField !! row'
+    -- oneLine = oldField !! row'
 
 toggle :: Turn -> Turn
 toggle Red = Green
@@ -33,23 +73,35 @@ makeClover :: Turn -> Clover
 makeClover Green = GreenClover
 makeClover Red = RedClover
 
-drawClovers :: Field -> [[Plot]] -> [Bitmap] -> Game ()
-drawClovers field plots picts = zipWithM_ (eachLineDraw picts) field plots
-  where eachLineDraw picts = zipWithM_ (drawOneClover picts)
+drawClovers :: [[Clover]] -> [Bitmap] -> Game ()
+drawClovers field picts = zipWithM_ (eachLineDraw picts) field plots
+  where
+    fieldLen = length field
+    plots = eachSlice fieldLen $ do
+      let lenDouble = fromIntegral fieldLen :: Double
+          plotList = [25,75..25+50*(lenDouble - 1)]
+      y <- plotList
+      x <- plotList
+      return (x,y) :: [Plot]
+    eachLineDraw picts = zipWithM_ (drawOneClover picts)
 
 drawOneClover :: [Bitmap] -> Clover -> Plot -> Game ()
 drawOneClover _ Empty _ = return ()
 drawOneClover  [gCloverPict, _] GreenClover (x,y) = translate (V2 x y) $ bitmap gCloverPict
 drawOneClover  [_, rCloverPict] RedClover (x,y) = translate (V2 x y) $ bitmap rCloverPict
 
-judgeFour :: Field -> Maybe Clover
+eachSlice :: Int -> [a] -> [[a]]
+eachSlice _ [] = []
+eachSlice n list = take n list : eachSlice n (drop n list)
+
+judgeFour :: [[Clover]] -> Maybe Clover
 judgeFour field
   | connectVertical /= [] = Just ((head . head) connectVertical)
   | connectHorizontal /= [] = Just ((head . head) connectVertical)
   | otherwise = Nothing
   where
-    connectVertical = vertical field :: Field
-    connectHorizontal = horizontal field :: Field
+    connectVertical = vertical field :: [[Clover]]
+    connectHorizontal = horizontal field :: [[Clover]]
 
 -- 2次元リストを転置させる
 transpose' :: Int -> [[a]] ->[[a]]
@@ -57,11 +109,11 @@ transpose' n list
   | (length . head) list < n = []
   | otherwise = concatMap (drop (n-1) . take n) list : transpose' (n+1) list
 
-vertical :: Field -> Field
+vertical :: [[Clover]] -> [[Clover]]
 vertical = horizontal . transpose' 1
 
 -- Emptyを取り除く
-horizontal :: Field -> Field
+horizontal :: [[Clover]] -> [[Clover]]
 horizontal = concatMap (filter (\x -> 4 <= length x) . filter (\x -> head x /= Empty) . group)
 
 -- 盤の描画
