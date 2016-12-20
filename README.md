@@ -4,4 +4,4 @@ Haskell, free-gameで、4目並べを実装する
 
 ## スクリーンショット
 
-![screenshot](connect-four.png)
+![screenshot](screenshot.png)
