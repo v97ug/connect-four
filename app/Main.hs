@@ -42,9 +42,9 @@ update picts font Play = do
 
 
   -- 無限ループさせる（終了条件は、どちらかが勝った時）
-  resultField <- playing emptyField picts Green font fieldLen
+  (resultField, turn) <- playing emptyField picts Green font fieldLen
   -- 無限ループさせる（終了条件は、クリックした時）
-  -- gameOver field plots picts font
+  gameOver resultField picts font turn
   tick -- これ絶対必要
   escape <- keyPress KeyEscape
   unless escape $ update picts font Play
