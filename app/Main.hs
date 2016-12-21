@@ -4,21 +4,21 @@ import Lib
 import Play
 
 import FreeGame
+import Opening
+import HowToPlay
 import Data.Array
 
-data Scene = Opening | Play | GameOver
+data Scene = Opening | HowToPlay | Play
 
 update :: [Bitmap] -> Font -> Scene -> Game ()
 update picts font Opening = do
-  l <- mouseDownL
-  let newScene = if l then Play else Opening
+  -- 無限ループさせる（終了条件は、画面がクリックされた時）
+  opening picts font
+  update picts font HowToPlay
 
-  translate (V2 80 200) . color black $ text font 40 "くろーばーならべ"
-  translate (V2 80 300) . color black $ text font 40 "click to start"
-
-  tick -- これ絶対必要
-  escape <- keyPress KeyEscape
-  unless escape $ update picts font newScene
+update picts font HowToPlay = do
+  howToPlay picts font
+  update picts font Play
 
 update picts font Play = do
   let fieldLen = 8 :: Int
