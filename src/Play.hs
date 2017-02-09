@@ -65,6 +65,7 @@ makeClover :: Turn -> Clover
 makeClover Green = GreenClover
 makeClover Red = RedClover
 
+-- TODO モナドかアプリカティブスタイルでかける
 drawClovers :: Field -> [Bitmap] -> Game ()
 drawClovers field picts = mapM_ (eachDraw picts) (assocs field)
   where
@@ -96,6 +97,7 @@ vertical :: [[Clover]] -> [[Clover]]
 vertical = horizontal . Data.List.transpose
 
 -- Emptyを取り除く
+-- TODO わかりやすく
 horizontal :: [[Clover]] -> [[Clover]]
 horizontal = concatMap (filter (\x -> 4 <= length x) . filter (\x -> head x /= Empty) . group)
 

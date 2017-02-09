@@ -17,16 +17,14 @@ update picts font Opening = do
   update picts font HowToPlay
 
 update picts font HowToPlay = do
+  -- 無限ループさせる（終了条件は、画面がクリックされた時）
   howToPlay picts font
   update picts font Play
 
 update picts font Play = do
   let fieldLen = 8 :: Int
-      indexTuple = do
-        let indexRange = [0..fieldLen-1]
-        x <- indexRange
-        y <- indexRange
-        return (x,y)
+      indexTuple = (,) <$> indexRange <*> indexRange
+        where indexRange = [0..fieldLen-1]
       emptyField =  array ((0,0), (fieldLen-1, fieldLen-1)) $ zip indexTuple [Empty, Empty ..] :: Array (Int,Int) Clover
 
   -- 無限ループさせる（終了条件は、どちらかが勝った時）
