@@ -65,15 +65,12 @@ makeClover :: Turn -> Clover
 makeClover Green = GreenClover
 makeClover Red = RedClover
 
--- TODO モナドかアプリカティブスタイルでかける
 drawClovers :: Field -> [Bitmap] -> Game ()
-drawClovers field picts = mapM_ (eachDraw picts) (assocs field)
-  where
-    eachDraw :: [Bitmap] -> ((Int,Int), Clover) -> Game ()
-    eachDraw picts ((row',column'), clover)= drawOneClover picts clover (x,y)
-      where
-        x = fromIntegral $ 25 + 50 * column' :: Double
+drawClovers fieldArray picts =
+  forM_ (assocs fieldArray) $ \((row',column'), clover) ->
+    let x = fromIntegral $ 25 + 50 * column' :: Double
         y = fromIntegral $ 25 + 50 * row' :: Double
+    in  drawOneClover picts clover (x,y)
 
 drawOneClover :: [Bitmap] -> Clover -> Plot -> Game ()
 drawOneClover _ Empty _ = return ()
