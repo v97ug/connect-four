@@ -10,37 +10,38 @@ import Data.Array
 
 data Scene = Opening | HowToPlay | Play
 
-update :: [Bitmap] -> Font -> Scene -> Game ()
-update picts font Opening = do
+update :: Font -> Scene -> Game ()
+update font Opening = do
   -- 無限ループさせる（終了条件は、画面がクリックされた時）
-  opening picts font
-  update picts font HowToPlay
+  opening font
+  update font HowToPlay
 
-update picts font HowToPlay = do
+update font HowToPlay = do
   -- 無限ループさせる（終了条件は、画面がクリックされた時）
-  howToPlay picts font
-  update picts font Play
+  howToPlay font
+  update font Play
 
-update picts font Play = do
-  let fieldLen = 8 :: Int
+update font Play = do
+  gCloverPict <- readBitmap "img/clover1.png"
+  rCloverPict <- readBitmap  "img/clover2.png"
+
+  let playPicts = [gCloverPict, rCloverPict]
+      fieldLen = 8 :: Int
       indexTuple = (,) <$> indexRange <*> indexRange
         where indexRange = [0..fieldLen-1]
       emptyField =  array ((0,0), (fieldLen-1, fieldLen-1)) $ zip indexTuple [Empty, Empty ..] :: Array (Int,Int) Clover
 
   -- 無限ループさせる（終了条件は、どちらかが勝った時）
-  (resultField, turn) <- playing emptyField picts Green font
+  (resultField, turn) <- playing emptyField playPicts Green font
   -- 無限ループさせる（終了条件は、クリックした時）
-  gameOver resultField picts font turn
+  gameOver resultField playPicts font turn
 
   tick -- これ絶対必要
-  escape <- keyPress KeyEscape
-  unless escape $ update picts font Play
+  update font Play
 
 
 main :: IO (Maybe())
 main = runGame Windowed (Box (V2 0 0) (V2 800 800)) $ do
   clearColor white
-  gCloverPict <- readBitmap "img/clover1.png"
-  rCloverPict <- readBitmap  "img/clover2.png"
   font <- loadFont "font/jk-go-m-1/JKG-M_3.ttf"
-  update [gCloverPict, rCloverPict] font Opening
+  update font Opening
