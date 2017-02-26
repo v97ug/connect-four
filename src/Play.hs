@@ -5,9 +5,9 @@ import Data.List
 import Data.Array
 import Data.Maybe
 
-data Clover = Empty | GreenClover | RedClover deriving (Show, Eq, Ord, Ix, Enum)
+data FieldState = Empty | GreenClover | RedClover | Block deriving (Show, Eq, Ord, Ix, Enum)
 data Turn = Green | Red deriving (Show, Eq)
-type Field = Array (Int,Int) Clover
+type Field = Array (Int,Int) FieldState
 type Plot = (Double, Double) -- 描画するときの座標
 
 -- 返り値は最終的なField
@@ -18,8 +18,8 @@ playing field picts turn font = do
 
   let maybeField = putClover l pos field turn :: Maybe Field
       newField = fromMaybe field maybeField :: Field
-      newCloverField = toCloverField newField :: [[Clover]]
-      winnerClover = judgeFour newCloverField :: Maybe Clover
+      newCloverField = toCloverField newField :: [[FieldState]]
+      winnerClover = judgeFour newCloverField :: Maybe FieldState
       newTurn = if isJust maybeField && isNothing winnerClover then toggle turn else turn
       isNewScene = isJust winnerClover :: Bool
 
@@ -29,10 +29,10 @@ playing field picts turn font = do
   tick -- これ絶対必要
   if isNewScene then return (newField, newTurn) else playing newField picts newTurn font
 
-toCloverField :: Field -> [[Clover]]
+toCloverField :: Field -> [[FieldState]]
 toCloverField field =
   let (_minTuple, (maxIndex, _)) = bounds field
-  in eachSlice (maxIndex + 1) $ elems field :: [[Clover]] -- fieldLenは、-1されている
+  in eachSlice (maxIndex + 1) $ elems field :: [[FieldState]] -- fieldLenは、-1されている
 
 gameOver :: Field -> [Bitmap] -> Font -> Turn -> Game ()
 gameOver field picts font turn = do
@@ -61,7 +61,7 @@ toggle :: Turn -> Turn
 toggle Red = Green
 toggle Green = Red
 
-makeClover :: Turn -> Clover
+makeClover :: Turn -> FieldState
 makeClover Green = GreenClover
 makeClover Red = RedClover
 
@@ -72,8 +72,9 @@ drawClovers fieldArray picts =
         y = fromIntegral $ 25 + 50 * row' :: Double
     in  drawOneClover picts clover (x,y)
 
-drawOneClover :: [Bitmap] -> Clover -> Plot -> Game ()
+drawOneClover :: [Bitmap] -> FieldState -> Plot -> Game ()
 drawOneClover _ Empty _ = return ()
+drawOneClover _ Block (x,y) = color black $ line [V2 (x-30) (y-30), V2 (x+30) (y+30)]
 drawOneClover  [gCloverPict, _] GreenClover (x,y) = translate (V2 x y) $ bitmap gCloverPict
 drawOneClover  [_, rCloverPict] RedClover (x,y) = translate (V2 x y) $ bitmap rCloverPict
 
@@ -81,21 +82,21 @@ eachSlice :: Int -> [a] -> [[a]]
 eachSlice _ [] = []
 eachSlice n list = take n list : eachSlice n (drop n list)
 
-judgeFour :: [[Clover]] -> Maybe Clover
+judgeFour :: [[FieldState]] -> Maybe FieldState
 judgeFour field
   | connectVertical /= [] = Just ((head . head) connectVertical)
   | connectHorizontal /= [] = Just ((head . head) connectHorizontal)
   | otherwise = Nothing
   where
-    connectVertical = vertical field :: [[Clover]]
-    connectHorizontal = horizontal field :: [[Clover]]
+    connectVertical = vertical field :: [[FieldState]]
+    connectHorizontal = horizontal field :: [[FieldState]]
 
-vertical :: [[Clover]] -> [[Clover]]
+vertical :: [[FieldState]] -> [[FieldState]]
 vertical = horizontal . Data.List.transpose
 
 -- Emptyを取り除く
 -- TODO わかりやすく
-horizontal :: [[Clover]] -> [[Clover]]
+horizontal :: [[FieldState]] -> [[FieldState]]
 horizontal = concatMap (filter (\x -> 4 <= length x) . filter (\x -> head x /= Empty) . group)
 
 -- 盤の描画
