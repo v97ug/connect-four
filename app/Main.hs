@@ -35,12 +35,9 @@ update font gen Play = do
       field =  array ((0,0), (fieldLen-1, fieldLen-1)) $ zip indexTuple fieldList :: Array (Int,Int) FieldState
 
   -- 無限ループさせる（終了条件は、どちらかが勝った時）
-  (resultField, turn) <- playing field playPicts Green font
-  -- 無限ループさせる（終了条件は、クリックした時）
-  gameOver resultField playPicts font turn
+  playing field playPicts Green font
 
   tick -- これ絶対必要
-
   let (_,newGen) = randomR (0,1) gen :: (Int, StdGen)
   update font newGen Play
 

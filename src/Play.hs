@@ -11,7 +11,7 @@ type Field = Array (Int,Int) FieldState
 type Plot = (Double, Double) -- 描画するときの座標
 
 -- 返り値は最終的なField
-playing :: Field -> [Bitmap] -> Turn -> Font -> Game (Field,Turn)
+playing :: Field -> [Bitmap] -> Turn -> Font -> Game ()
 playing field picts turn font = do
   pos <- mousePosition
   l <- mouseDownL
@@ -22,28 +22,35 @@ playing field picts turn font = do
       winnerClover = judgeFour newCloverField :: Maybe FieldState
       newTurn = if isJust maybeField && isNothing winnerClover then toggle turn else turn
       isNewScene = isJust winnerClover :: Bool
+      isTie = Empty `notElem` elems newField
 
   drawGrid -- 盤の描画
   drawClovers newField picts
 
   tick -- これ絶対必要
-  if isNewScene then return (newField, newTurn) else playing newField picts newTurn font
+  if isNewScene || isTie
+    then gameOver newField picts font newTurn isTie
+    else playing newField picts newTurn font
 
 toCloverField :: Field -> [[FieldState]]
 toCloverField field =
   let (_minTuple, (maxIndex, _)) = bounds field
   in eachSlice (maxIndex + 1) $ elems field :: [[FieldState]] -- fieldLenは、-1されている
 
-gameOver :: Field -> [Bitmap] -> Font -> Turn -> Game ()
-gameOver field picts font turn = do
+-- 無限ループさせる（終了条件は、クリックした時）
+gameOver :: Field -> [Bitmap] -> Font -> Turn -> Bool -> Game ()
+gameOver field picts font turn isTie= do
   drawGrid -- 盤の描画
   drawClovers field picts
-  translate (V2 80 200) . color black $ text font 40 (show turn ++ "の勝ちです。")
+  if isTie
+    then translate (V2 80 200) . color black $ text font 40 "引き分けです。"
+    else translate (V2 80 200) . color black $ text font 40 (show turn ++ "の勝ちです。")
+
   translate (V2 80 300) . color black $ text font 40 "もういちど、あそぶときは\n画面をクリックしてくださいっ。"
   l <- mouseDownL
 
   tick
-  unless l $  gameOver field picts font turn
+  unless l $  gameOver field picts font turn isTie
 
 putClover :: Bool -> Vec2 -> Field-> Turn -> Maybe Field
 putClover isPut (V2 x y) field turn
