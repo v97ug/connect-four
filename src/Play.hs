@@ -97,7 +97,7 @@ vertical = horizontal . Data.List.transpose
 -- Emptyを取り除く
 -- TODO わかりやすく
 horizontal :: [[FieldState]] -> [[FieldState]]
-horizontal = concatMap (filter (\x -> 4 <= length x) . filter (\x -> head x /= Empty) . group)
+horizontal = concatMap (filter (\x -> 4 <= length x && (head x == RedClover || head x == GreenClover)) . group)
 
 -- 盤の描画
 drawGrid :: Game ()

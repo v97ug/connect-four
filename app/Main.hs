@@ -40,7 +40,9 @@ update font gen Play = do
   gameOver resultField playPicts font turn
 
   tick -- これ絶対必要
-  update font gen Play
+
+  let (_,newGen) = randomR (0,1) gen :: (Int, StdGen)
+  update font newGen Play
 
 shuffle :: StdGen -> [a] -> [a]
 shuffle _ [] = []
