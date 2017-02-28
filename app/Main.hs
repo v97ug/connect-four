@@ -13,13 +13,15 @@ data Scene = Opening | HowToPlay | Play
 
 update :: Font -> StdGen -> Scene -> Game ()
 update font gen Opening = do
+  backPict <- readBitmap "img/how-to-play.png"
   -- 無限ループさせる（終了条件は、画面がクリックされた時）
-  opening font
+  opening font backPict
   update font gen HowToPlay
 
 update font gen HowToPlay = do
+  backPict <- readBitmap "img/how-to-play.png"
   -- 無限ループさせる（終了条件は、画面がクリックされた時）
-  howToPlay font
+  howToPlay font backPict
   update font gen Play
 
 update font gen Play = do
@@ -27,7 +29,7 @@ update font gen Play = do
   rCloverPict <- readBitmap  "img/clover2.png"
 
   let playPicts = [gCloverPict, rCloverPict]
-      fieldLen = 8 :: Int
+      fieldLen = 10 :: Int
       indexTuple = (,) <$> indexRange <*> indexRange
         where indexRange = [0..fieldLen-1]
       fieldList = shuffle gen $ replicate numBlock Block ++ replicate (fieldLen * fieldLen - numBlock) Empty :: [FieldState]
