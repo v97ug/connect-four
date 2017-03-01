@@ -4,15 +4,13 @@ module Play
 ,  playing
 ) where
 
+import Field
+
 import FreeGame
 import Data.List
-import Data.Array
 import Data.Maybe
 
-data FieldState = Empty | GreenClover | RedClover | Block deriving (Show, Eq, Ord, Ix, Enum)
 data Turn = Green | Red deriving (Show, Eq)
-type Field = Array (Int,Int) FieldState
-type Plot = (Double, Double) -- 描画するときの座標
 
 -- 返り値は最終的なField
 playing :: Field -> [Bitmap] -> Turn -> Font -> Game ()
@@ -22,11 +20,11 @@ playing field picts turn font = do
 
   let maybeField = putClover l pos field turn :: Maybe Field
       newField = fromMaybe field maybeField :: Field
-      newCloverField = toCloverField newField :: [[FieldState]]
+      newCloverField = toList newField :: [[FieldState]]
       winnerClover = judgeFour newCloverField :: Maybe FieldState
       newTurn = if isJust maybeField && isNothing winnerClover then toggle turn else turn
       isNewScene = isJust winnerClover :: Bool
-      isTie = Empty `notElem` elems newField
+      isTie = Empty `notElem` getAllFieldState newField
 
   drawGrid newField -- 盤の描画
   drawClovers newField picts
@@ -35,11 +33,6 @@ playing field picts turn font = do
   if isNewScene || isTie
     then gameOver newField picts font newTurn isTie
     else playing newField picts newTurn font
-
-toCloverField :: Field -> [[FieldState]]
-toCloverField field =
-  let (_minTuple, (maxIndex, _)) = bounds field
-  in eachSlice (maxIndex + 1) $ elems field :: [[FieldState]] -- fieldLenは、-1されている
 
 -- 無限ループさせる（終了条件は、クリックした時）
 gameOver :: Field -> [Bitmap] -> Font -> Turn -> Bool -> Game ()
@@ -59,14 +52,14 @@ gameOver field picts font turn isTie= do
 putClover :: Bool -> Vec2 -> Field-> Turn -> Maybe Field
 putClover isPut (V2 x y) field turn
   | not isPut = Nothing
-  | maxIndex < row' = Nothing
-  | maxIndex < column' = Nothing
-  | field ! (row', column') /= Empty = Nothing
-  | otherwise = Just ( field // [((row', column'), makeClover turn)] )
+  | maxIndex < row = Nothing
+  | maxIndex < column = Nothing
+  | field `notEmpty` (row, column) = Nothing
+  | otherwise = Just $ field `changeFieldState` ((row, column), makeClover turn)
   where
-    (_minTuple, (maxIndex, _)) = bounds field
-    row' =  floor y `div` 50
-    column' = floor x `div` 50
+    maxIndex = getHeightIndex field
+    row =  floor y `div` 50
+    column = floor x `div` 50
 
 toggle :: Turn -> Turn
 toggle Red = Green
@@ -77,21 +70,17 @@ makeClover Green = GreenClover
 makeClover Red = RedClover
 
 drawClovers :: Field -> [Bitmap] -> Game ()
-drawClovers fieldArray picts =
-  forM_ (assocs fieldArray) $ \((row',column'), clover) ->
+drawClovers field picts =
+  forM_ (getAll field) $ \((row',column'), clover) ->
     let x = fromIntegral $ 25 + 50 * column' :: Double
         y = fromIntegral $ 25 + 50 * row' :: Double
     in  drawOneClover picts clover (x,y)
 
-drawOneClover :: [Bitmap] -> FieldState -> Plot -> Game ()
+drawOneClover :: [Bitmap] -> FieldState -> (Double, Double) -> Game ()
 drawOneClover _ Empty _ = return ()
 drawOneClover _ Block (x,y) = color black $ line [V2 (x-30) (y-30), V2 (x+30) (y+30)]
 drawOneClover  [gCloverPict, _] GreenClover (x,y) = translate (V2 x y) $ bitmap gCloverPict
 drawOneClover  [_, rCloverPict] RedClover (x,y) = translate (V2 x y) $ bitmap rCloverPict
-
-eachSlice :: Int -> [a] -> [[a]]
-eachSlice _ [] = []
-eachSlice n list = take n list : eachSlice n (drop n list)
 
 judgeFour :: [[FieldState]] -> Maybe FieldState
 judgeFour field
@@ -105,7 +94,6 @@ judgeFour field
 vertical :: [[FieldState]] -> [[FieldState]]
 vertical = horizontal . Data.List.transpose
 
--- Emptyを取り除く
 -- TODO わかりやすく
 horizontal :: [[FieldState]] -> [[FieldState]]
 horizontal = concatMap (filter (\x -> 4 <= length x && (head x == RedClover || head x == GreenClover)) . group)
@@ -113,9 +101,26 @@ horizontal = concatMap (filter (\x -> 4 <= length x && (head x == RedClover || h
 -- 盤の描画
 drawGrid :: Field -> Game ()
 drawGrid field =
-  let (_, (maxIndex, _)) = bounds field
-      fieldLen = fromIntegral maxIndex + 1 :: Double
+  let fieldLen = fromIntegral (getHeight field)
   in
     forM_ [0,50..50*fieldLen] $ \x -> do
       color blue $ line [V2 0 x, V2 (fieldLen*50) x]
       color blue $ line [V2 x 0, V2 x (fieldLen*50)]
+
+drawGrid' :: Int -> Int -> Int -> Game ()
+drawGrid' height width size = do
+  let height' = fromIntegral height :: Double
+      width' = fromIntegral width :: Double
+      size' = fromIntegral size :: Double
+  forM_ [0, size'..size' * height'] $ \h ->
+    forM_ [0, size'..size' * width'] $ \w -> do
+      color blue $ line [V2 0 h, V2 (width' * size') h]
+      color blue $ line [V2 w 0, V2 w (height' * size')]
+
+drawGrid'' :: Int -> Int -> Game ()
+drawGrid'' numSquare size = do
+  let numSquare' = fromIntegral numSquare :: Double
+      size' = fromIntegral size :: Double
+  forM_ [0, size'..size' * numSquare'] $ \x -> do
+    color blue $ line [V2 0 x, V2 (numSquare' * 50) x]
+    color blue $ line [V2 x 0, V2 x (numSquare' * 50)]
