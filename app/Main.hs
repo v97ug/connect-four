@@ -1,10 +1,11 @@
 module Main where
 
-import Play
-
-import FreeGame
 import Opening
 import HowToPlay
+import Play
+import HexRGB
+
+import FreeGame
 import Data.Array
 import System.Random
 
@@ -24,6 +25,7 @@ update font gen HowToPlay = do
   update font gen Play
 
 update font gen Play = do
+  clearColor $ fromHexRGB "fff2e6"
   gCloverPict <- readBitmap "img/clover1.png"
   rCloverPict <- readBitmap  "img/clover2.png"
 
