@@ -35,7 +35,8 @@ eachSlice n list = take n list : eachSlice n (drop n list)
 hex2dec :: String -> Integer
 hex2dec = foldl (\d h -> d*16 + hex1 h) 0
 
+fromHexRGB :: (HasRGB f, RealFrac a) => String -> f a
 fromHexRGB rgbHex =
   let rgbDec = map hex2dec $ eachSlice 2 rgbHex :: [Integer]
-      [red, green, blue] = map ((/255) . fromIntegral) rgbDec
-  in fromRGB red green blue
+      [red', green', blue'] = map ((/255) . fromIntegral) rgbDec
+  in fromRGB red' green' blue'

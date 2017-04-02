@@ -80,9 +80,9 @@ drawClovers field picts fieldSize =
 
 drawOneClover :: [Bitmap] -> FieldState -> (Double, Double) -> Game ()
 drawOneClover _ Empty _ = return ()
-drawOneClover _ Block (x,y) = color black $ line [V2 (x-30) (y-30), V2 (x+30) (y+30)]
-drawOneClover  [gCloverPict, _] GreenClover (x,y) = translate (V2 x y) $ bitmap gCloverPict
-drawOneClover  [_, rCloverPict] RedClover (x,y) = translate (V2 x y) $ bitmap rCloverPict
+drawOneClover [_, _, blockPict] Block (x,y) = translate (V2 x y) $ bitmap blockPict
+drawOneClover [gCloverPict, _, _] GreenClover (x,y) = translate (V2 x y) $ bitmap gCloverPict -- x,yは、絵の中心の座標
+drawOneClover [_, rCloverPict, _] RedClover (x,y) = translate (V2 x y) $ bitmap rCloverPict
 
 judgeFour :: [[FieldState]] -> Maybe FieldState
 judgeFour field
