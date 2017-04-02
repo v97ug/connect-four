@@ -1,2 +1,5 @@
 .stack-work/
-
+.idea/
+.ideaHaskellLib/
+cabal.config
+connect-four.iml
