@@ -48,8 +48,8 @@ shuffle :: StdGen -> [a] -> [a]
 shuffle _ [] = []
 shuffle gen list =
   let
-    (index,newGen) = randomR (0, length list - 1) gen :: (Int, StdGen)
-  in list !! index : shuffle newGen (take index list ++ drop (index + 1) list)
+    (idx,newGen) = randomR (0, length list - 1) gen :: (Int, StdGen)
+  in list !! idx : shuffle newGen (take idx list ++ drop (idx + 1) list)
 
 
 main :: IO (Maybe())
