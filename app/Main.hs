@@ -26,10 +26,11 @@ update font gen HowToPlay = do
 
 update font gen Play = do
   clearColor $ fromHexRGB "fff2e6"
-  gCloverPict <- readBitmap "img/clover1.png"
-  rCloverPict <- readBitmap  "img/clover2.png"
+  gCloverPict <- readBitmap "img/green-clover.png"
+  rCloverPict <- readBitmap  "img/red-clover.png"
+  blockPict <- readBitmap "img/block.png"
 
-  let playPicts = [gCloverPict, rCloverPict]
+  let playPicts = [gCloverPict, rCloverPict, blockPict]
       fieldLen = 10 :: Int
       indexTuple = (,) <$> indexRange <*> indexRange
         where indexRange = [0..fieldLen-1]
