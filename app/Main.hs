@@ -13,22 +13,22 @@ data Scene = Opening | HowToPlay | Play
 
 update :: Font -> StdGen -> Scene -> Game ()
 update font gen Opening = do
-  backPict <- readBitmap "img/how-to-play.png"
+  backPict <- readBitmap "asset/img/how-to-play.png"
   -- 無限ループさせる（終了条件は、画面がクリックされた時）
   opening font backPict
   update font gen HowToPlay
 
 update font gen HowToPlay = do
-  backPict <- readBitmap "img/how-to-play.png"
+  backPict <- readBitmap "asset/img/how-to-play.png"
   -- 無限ループさせる（終了条件は、画面がクリックされた時）
   howToPlay font backPict
   update font gen Play
 
 update font gen Play = do
   clearColor $ fromHexRGB "fff2e6"
-  gCloverPict <- readBitmap "img/green-clover.png"
-  rCloverPict <- readBitmap  "img/red-clover.png"
-  blockPict <- readBitmap "img/block.png"
+  gCloverPict <- readBitmap "asset/img/green-clover.png"
+  rCloverPict <- readBitmap  "asset/img/red-clover.png"
+  blockPict <- readBitmap "asset/img/block.png"
 
   let playPicts = [gCloverPict, rCloverPict, blockPict]
       fieldLen = 10 :: Int
@@ -59,5 +59,5 @@ main = do
   runGame Windowed (Box (V2 0 0) (V2 800 800)) $ do
     setTitle "くろーばーならべ"
     clearColor white
-    font <- loadFont "font/jk-go-m-1/JKG-M_3.ttf"
+    font <- loadFont "asset/font/jk-go-m-1/JKG-M_3.ttf"
     update font gen Opening
