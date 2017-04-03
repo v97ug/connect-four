@@ -59,5 +59,5 @@ main = do
   runGame Windowed (Box (V2 0 0) (V2 800 800)) $ do
     setTitle "くろーばーならべ"
     clearColor white
-    font <- loadFont "asset/font/jk-go-m-1/JKG-M_3.ttf"
+    font <- loadFont "asset/font/JKG-M_3.ttf"
     update font gen Opening
