@@ -12,8 +12,11 @@ Haskell, free-gameで、4目並べを作りました。
 2. 展開したフォルダの中の、 connect-four-exeをダブルクリックすると、ゲームが始まります。
 
 
-## スクリーンショット
+# スクリーンショット
 
 ![screenshot](screenshot.png)
 
 ![screenshot2](screenshot2.png)
+
+# 使用した素材
+[JKゴシックM](http://font.cutegirl.jp/jk-font-medium.html#more-460)
